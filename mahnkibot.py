@@ -206,7 +206,7 @@ while True:
                             quote = get_command_arg(parts)
 
                             if quote:
-                                try:
+                                #try:
                                     with open(QUOTEFILE, 'a') as txt:
                                         
                                         #Get channel info so we can get the game
@@ -216,11 +216,11 @@ while True:
                                         now = time.strftime("%m/%d/%Y")
 
                                         #Add the quote
-                                        txt.write(quote+"||"+thisgame+"||"+now+"\r")
+                                        txt.write("%s||%s||%s\r" % (quote, thisgame, now))
 
                                         send_message("Added quote: "+quote+" (Playing "+thisgame+" on "+now+")")
-                                except:
-                                    send_message("Something went wrong Kappa")
+                                #except:
+                                #    send_message("Something went wrong Kappa")
                             else:
                                 log.debug("!addquote: No quote provided")
                         else:
@@ -296,8 +296,8 @@ while True:
                         if is_mod(username):
                             description=get_command_arg(parts) 
                             
-                            thisuser=MYNICK
-                            #thisuser='monsterousrage'
+                            #thisuser=MYNICK
+                            thisuser='wtfgwar'
 
                             if not description:
                                 description = "" 
@@ -316,7 +316,7 @@ while True:
                                         msg = "User "+thisuser+" is not live."
                                     else:
                                         now = time.strftime("%m/%d/%Y")
-                                        txt.write(thisgame+"||"+description+"||"+now+"||"+ts+"\r")
+                                        txt.write("%s||%s||%s||%s\r" % (thisgame, description, now, ts))
                                         msg = "Tagged highlight: "+description+" (Playing "+thisgame+" on "+now+" at "+ts+")"
 
                                     send_message(msg)
