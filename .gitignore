@@ -41,5 +41,5 @@ Thumbs.db
 *.sh
 
 # Settings
-#settings.py
+settings.py
 settings.pyc
