@@ -107,6 +107,8 @@ def get_timediff_str(date1, date2):
 
 get_mods()
 
+readbuffer = ""
+
 while True:
     readbuffer = readbuffer + s.recv(1024)
     temp = string.split(readbuffer, "\n")
@@ -123,6 +125,8 @@ while True:
             # Splits the given string so we can work with it better
             parts = string.split(line, ":", 2)
 
+            log.debug("Parts: %s", str(parts))
+
             if "QUIT" not in parts[1] and "JOIN" not in parts[1] and "PART" not in parts[1]:
                 try:
                     # Sets the message variable to the actual message sent
@@ -138,7 +142,7 @@ while True:
                     log.info("Main: "+username + ": " + message)
                     msg = ""
 
-                    # Is this a URL?  If the user does not have permission to post a link, dump it
+                    # Is this a URL?  If the user does not have permission to post a link, purge it
                     if re.findall(r'[a-zA-z]\.[a-zA-z]', message) and message not in LINKEXCLUSIONS:
                         #Mods and the bot itself are excluded from this
                         log.debug("Link checker: %s just posted a link", username)
@@ -153,7 +157,7 @@ while True:
                                 #User is permitted, but is the user still within the permit time window?
                                 canpostlink = (currenttime <= PERMITDATA[username])
                                 if not canpostlink:
-                                    log.debug("Link Checker: %s's permit expired", username)
+                                    log.debug("Link checker: %s's permit expired", username)
                                 else:
                                     print username+" used their link permit"
                                     
@@ -206,7 +210,7 @@ while True:
                             quote = get_command_arg(parts)
 
                             if quote:
-                                #try:
+                                try:
                                     with open(QUOTEFILE, 'a') as txt:
                                         
                                         #Get channel info so we can get the game
@@ -219,15 +223,14 @@ while True:
                                         txt.write("%s||%s||%s\r" % (quote, thisgame, now))
 
                                         send_message("Added quote: "+quote+" (Playing "+thisgame+" on "+now+")")
-                                #except:
-                                #    send_message("Something went wrong Kappa")
+                                except:
+                                    send_message("Something went wrong Kappa")
                             else:
                                 log.debug("!addquote: No quote provided")
                         else:
-                            log.debug("!addquote: %s is a NOT mod",username)
+                            log.debug("!addquote: %s is NOT mod, command ignored",username)
                     if message == "!commands":
-                        msg = "Available chat commands are: !commands, !rules, !quote, !uptime, !social"
-                        send_message(msg)
+                        send_message(COMMANDSTEXT)
                     if message.startswith("!its") or message.startswith("!caster"):
                         if is_mod(username):
                             msg = get_command_arg(parts)
@@ -240,7 +243,10 @@ while True:
                                         send_message("That doesn't seem to be a valid user, champ.")
                                     else:
                                         url = parsed_json['url']
-                                        game = parsed_json['game'].encode("utf-8") # Make sure to encode this to UTF-8 as some game titles have unicode characters in them
+                                        game = None
+
+                                        if parsed_json['game']:
+                                            game = parsed_json['game'].encode("utf-8") # Make sure to encode this to UTF-8 as some game titles have unicode characters in them
 
                                         if game:
                                             msg = ("Hey, listen! Check out this awesome streamer: "+url+" He/She was just playing %s! \m/").encode("utf-8") % game
@@ -250,9 +256,9 @@ while True:
                                 except:
                                     send_message("Something went wrong Kappa")
                         else:
-                            log.debug("!caster: %s is a NOT mod", username)
+                            log.debug("!caster: %s is NOT mod, command ignored", username)
                     if message.startswith("!uptime"):
-                        #try:
+                        try:
                             if message == "!uptime":
                                 thisnick = MYNICK
                             else:
@@ -269,8 +275,8 @@ while True:
                                 msg = thisnick+" has been live for "+ts+"."
 
                             send_message(msg)
-                        #except:
-                        #    send_message("Something went wrong Kappa")
+                        except:
+                            send_message("Something went wrong Kappa")
 
                     if message.startswith("!permit"):
 
@@ -296,8 +302,8 @@ while True:
                         if is_mod(username):
                             description=get_command_arg(parts) 
                             
-                            #thisuser=MYNICK
-                            thisuser='wtfgwar'
+                            thisuser=MYNICK
+                            #thisuser='wtfgwar'
 
                             if not description:
                                 description = "" 
@@ -331,8 +337,16 @@ while True:
                     if message == "!rules":
                         send_message(RULETEXT)
 
+                    if message == "!donate":
+                        send_message("You can support me by visiting my Extra Life page at http://bit.ly/mahnki and clicking \"Support Me\"!  Make sure you look at the donation incentives, and if you'd like to choose one, specify which one in your donation message!  Check out the raffle prizes, too!")
+
+                    if message == "!schedule":
+                        send_message("The schedule of games I'll be playing during Extra Life can be found here: http://bit.ly/mahnkischedule  (All times are EST, GMT -5)")
+
+
                     nummessages+=1
 
+                    # Check if we need to plug the message of the day
                     if PLUGCYCLE:
                         log.debug("Plug cycle: Number of messages so far: %s", str(nummessages))
 
@@ -340,7 +354,6 @@ while True:
                         if not nummessagesreachedflag:
                             nummessagesreachedflag = (nummessages % PLUGMESSAGENUM == 0)
 
-                        # Check if we need to plug the message of the day
                         currenttime = int(time.time())
 
                         log.debug("Plug cycle: Seconds until next plug is allowed: %s.  Number of messages flag is %s.", str(nextplugtime-currenttime), str(nummessagesreachedflag))
